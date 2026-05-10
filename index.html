@@ -438,7 +438,10 @@
 <div class="panel-right">
   <div class="preview-label">Preview</div>
   <div class="preview-box" id="preview"></div>
-  <button class="btn-copy" id="copy-btn" onclick="copyText()">Copy</button>
+  <div style="display:flex;gap:10px;">
+    <button class="btn-copy" id="copy-btn" onclick="copyText(false)">通常 Copy</button>
+    <button class="btn-copy" id="copy-flat-btn" onclick="copyText(true)" style="background:var(--bg);color:var(--accent);border:1px solid var(--border);">左揃え Copy</button>
+  </div>
 </div>
 </div>
 
@@ -556,6 +559,8 @@
     if (ho) { ho[key] = val; render(); }
   }
 
+  // ── 通常（スペース揃え）──
+
   function renderUmi() {
     const scenario = document.getElementById('scenario').value || 'シナリオ名';
     const kp = document.getElementById('kp').value || '🫧';
@@ -639,6 +644,7 @@
     });
     hoText = hoText.replace(/\n$/, '');
 
+    const keishoLine = showKeisho ? '(敬称略)' : '';
     return [
       div, '',
       `𝐂𝐨𝐂`,
@@ -647,36 +653,24 @@
       kp, '',
       `❙ ${plType}`,
       hoText,
-      showKeisho ? (footerEmoji ? `(敬称略)\n\n${footerEmoji}` : '(敬称略)') : footerEmoji, '',
+      keishoLine,
+      footerEmoji,
       div,
-    ].join('\n');
+    ].filter(l => l !== '').join('\n');
   }
 
-  function render() {
-    let text = '';
-    if (currentTemplate === 0) text = renderUmi();
-    else if (currentTemplate === 1) text = renderStar();
-    else text = renderLine();
-    document.getElementById('preview').textContent = text;
-  }
+  // ── 左揃え（Twitter用）──
 
-  function toSup(s) {
-    const map = {'0':'⁰','1':'¹','2':'²','3':'³','4':'⁴','5':'⁵','6':'⁶','7':'⁷','8':'⁸','9':'⁹'};
-    return String(s).split('').map(c => map[c] || c).join('');
-  }
+  function renderUmiFlat() {
+    const scenario = document.getElementById('scenario').value || 'シナリオ名';
+    const kp = document.getElementById('kp').value || '🫧';
+    const endLabel = document.getElementById('end-label').value || 'A';
+    const endDesc = document.getElementById('end-desc').value || '';
+    const footerEmoji = document.getElementById('footer-emoji').value || '';
+    const endLine = endDesc ? `${endLabel}｜${endDesc}` : endLabel;
 
-  function copyText() {
-    const text = document.getElementById('preview').textContent;
-    navigator.clipboard.writeText(text).then(() => {
-      const btn = document.getElementById('copy-btn');
-      btn.textContent = 'Copied ✦';
-      btn.classList.add('copied');
-      setTimeout(() => { btn.textContent = 'Copy'; btn.classList.remove('copied'); }, 2000);
-    });
-  }
-
-  addHO(); addHO();
-  render();
-</script>
-</body>
-</html>
+    let hoText = '';
+    hoList.forEach((ho) => {
+      const num = ho.num || '';
+      const role = ho.role || '';
+  
