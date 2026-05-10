@@ -1,0 +1,604 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>卓報告ジェネレーター</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;1,300&family=Noto+Sans+JP:wght@300;400&display=swap');
+
+  :root {
+    --bg: #0d0d0f;
+    --surface: #13131a;
+    --border: #2a2a38;
+    --accent: #c9a87c;
+    --text: #e8e4dc;
+    --muted: #6b6880;
+    --input-bg: #0f0f16;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Noto Sans JP', sans-serif;
+    font-weight: 300;
+    min-height: 100vh;
+    display: flex;
+  }
+
+  .panel-left {
+    width: 440px;
+    min-width: 320px;
+    padding: 36px 28px;
+    border-right: 1px solid var(--border);
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+    overflow-y: auto;
+  }
+
+  h1 {
+    font-family: 'Cormorant Garamond', serif;
+    font-weight: 300;
+    font-size: 1rem;
+    letter-spacing: 0.25em;
+    color: var(--accent);
+    text-transform: uppercase;
+  }
+
+  .section-title {
+    font-size: 0.62rem;
+    letter-spacing: 0.25em;
+    color: var(--muted);
+    text-transform: uppercase;
+    margin-bottom: 10px;
+  }
+
+  .field { display: flex; flex-direction: column; gap: 6px; }
+
+  label {
+    font-size: 0.68rem;
+    letter-spacing: 0.12em;
+    color: var(--muted);
+    text-transform: uppercase;
+  }
+
+  input, select {
+    background: var(--input-bg);
+    border: 1px solid var(--border);
+    color: var(--text);
+    font-family: 'Noto Sans JP', sans-serif;
+    font-weight: 300;
+    font-size: 0.83rem;
+    padding: 8px 11px;
+    outline: none;
+    transition: border-color 0.2s;
+    width: 100%;
+  }
+
+  input:focus, select:focus { border-color: var(--accent); }
+  input::placeholder { color: var(--muted); }
+  select option { background: var(--surface); }
+
+  .row { display: flex; gap: 8px; }
+  .row .field { flex: 1; }
+
+  /* template tabs */
+  .template-tabs {
+    display: flex;
+    gap: 0;
+  }
+
+  .tab {
+    flex: 1;
+    background: var(--input-bg);
+    border: 1px solid var(--border);
+    color: var(--muted);
+    font-family: 'Noto Sans JP', sans-serif;
+    font-size: 0.68rem;
+    letter-spacing: 0.1em;
+    padding: 8px 4px;
+    cursor: pointer;
+    text-align: center;
+    transition: all 0.2s;
+    margin-right: -1px;
+  }
+
+  .tab.active {
+    border-color: var(--accent);
+    color: var(--accent);
+    z-index: 1;
+  }
+
+  /* toggle buttons */
+  .toggle-row { display: flex; gap: 0; }
+
+  .toggle-btn {
+    flex: 1;
+    background: var(--input-bg);
+    border: 1px solid var(--border);
+    color: var(--muted);
+    font-family: 'Noto Sans JP', sans-serif;
+    font-size: 0.72rem;
+    letter-spacing: 0.1em;
+    padding: 7px 4px;
+    cursor: pointer;
+    text-align: center;
+    transition: all 0.2s;
+    margin-right: -1px;
+  }
+
+  .toggle-btn.active {
+    background: #1a1a28;
+    border-color: var(--accent);
+    color: var(--accent);
+    z-index: 1;
+  }
+
+  /* HO blocks */
+  .ho-block {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    padding: 14px;
+    display: flex;
+    flex-direction: column;
+    gap: 9px;
+  }
+
+  .ho-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  .ho-label {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 0.85rem;
+    letter-spacing: 0.15em;
+    color: var(--accent);
+  }
+
+  .btn-remove {
+    background: none;
+    border: 1px solid var(--border);
+    color: var(--muted);
+    font-size: 0.62rem;
+    letter-spacing: 0.1em;
+    padding: 3px 7px;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+
+  .btn-remove:hover { border-color: #6b3a3a; color: #a05050; }
+
+  .btn-add {
+    background: none;
+    border: 1px solid var(--border);
+    color: var(--muted);
+    font-size: 0.68rem;
+    letter-spacing: 0.15em;
+    padding: 9px;
+    cursor: pointer;
+    transition: all 0.2s;
+    text-transform: uppercase;
+    width: 100%;
+    margin-top: 10px;
+  }
+
+  .btn-add:hover { border-color: var(--accent); color: var(--accent); }
+
+  .divider { border: none; border-top: 1px solid var(--border); }
+
+  /* emoji picker */
+  .emoji-row { display: flex; gap: 6px; flex-wrap: wrap; }
+
+  .emoji-btn {
+    background: var(--input-bg);
+    border: 1px solid var(--border);
+    color: var(--text);
+    font-size: 1rem;
+    padding: 5px 9px;
+    cursor: pointer;
+    transition: border-color 0.2s;
+  }
+
+  .emoji-btn.selected { border-color: var(--accent); }
+  .emoji-btn:hover { border-color: var(--accent); }
+
+  /* right panel */
+  .panel-right {
+    flex: 1;
+    padding: 36px 36px;
+    display: flex;
+    flex-direction: column;
+    gap: 18px;
+  }
+
+  .preview-label {
+    font-size: 0.62rem;
+    letter-spacing: 0.25em;
+    color: var(--muted);
+    text-transform: uppercase;
+  }
+
+  .preview-box {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    padding: 28px 24px;
+    font-family: 'Noto Sans JP', sans-serif;
+    font-weight: 300;
+    font-size: 0.82rem;
+    line-height: 2;
+    white-space: pre-wrap;
+    color: var(--text);
+    flex: 1;
+    min-height: 300px;
+  }
+
+  .btn-copy {
+    align-self: flex-start;
+    background: none;
+    border: 1px solid var(--accent);
+    color: var(--accent);
+    font-family: 'Noto Sans JP', sans-serif;
+    font-size: 0.68rem;
+    letter-spacing: 0.2em;
+    padding: 9px 22px;
+    cursor: pointer;
+    text-transform: uppercase;
+    transition: all 0.2s;
+  }
+
+  .btn-copy:hover { background: var(--accent); color: var(--bg); }
+  .btn-copy.copied { background: #2a4a2a; border-color: #4a7a4a; color: #8aba8a; }
+
+  /* template-specific fields */
+  .field-group { display: flex; flex-direction: column; gap: 10px; }
+
+  .hidden { display: none; }
+</style>
+</head>
+<body>
+
+<div class="panel-left">
+  <h1>卓報告ジェネレーター</h1>
+
+  <!-- テンプレート選択 -->
+  <div>
+    <div class="section-title">テンプレート</div>
+    <div class="template-tabs">
+      <button class="tab active" onclick="setTemplate(0, this)">うみ</button>
+      <button class="tab" onclick="setTemplate(1, this)">✦ 囲み</button>
+      <button class="tab" onclick="setTemplate(2, this)">─── 区切り</button>
+    </div>
+  </div>
+
+  <hr class="divider">
+
+  <!-- うみ専用: ヘッダー絵文字 -->
+  <div id="field-emoji">
+    <div class="section-title">ヘッダー絵文字</div>
+    <div class="emoji-row">
+      <button class="emoji-btn selected" onclick="selectEmoji(this, '𖤐')">𖤐</button>
+      <button class="emoji-btn" onclick="selectEmoji(this, '☽')">☽</button>
+      <button class="emoji-btn" onclick="selectEmoji(this, '✧')">✧</button>
+      <button class="emoji-btn" onclick="selectEmoji(this, '🕸')">🕸</button>
+      <button class="emoji-btn" onclick="selectEmoji(this, '🩸')">🩸</button>
+      <button class="emoji-btn" onclick="selectEmoji(this, '🌑')">🌑</button>
+    </div>
+  </div>
+
+  <hr class="divider" id="divider-emoji">
+
+  <!-- 共通: シナリオ名 -->
+  <div class="field">
+    <label>シナリオ名</label>
+    <input type="text" id="scenario" placeholder="シナリオ名" oninput="render()">
+  </div>
+
+  <!-- KP/KPC切替 -->
+  <div>
+    <div class="section-title">KP種別</div>
+    <div class="toggle-row" style="margin-bottom:10px;">
+      <button class="toggle-btn active" onclick="setKPType('KP', this)">KP</button>
+      <button class="toggle-btn" onclick="setKPType('KPC', this)">KPC</button>
+    </div>
+    <div class="field">
+      <label id="kp-label">KP名</label>
+      <input type="text" id="kp" placeholder="名前" oninput="render()">
+    </div>
+  </div>
+
+  <hr class="divider">
+
+  <!-- PC/PL切替 -->
+  <div>
+    <div class="section-title">PC/PL表記</div>
+    <div class="toggle-row">
+      <button class="toggle-btn active" onclick="setPLType('PL', this)">PL</button>
+      <button class="toggle-btn" onclick="setPLType('PC', this)">PC</button>
+    </div>
+  </div>
+
+  <!-- HO -->
+  <div>
+    <div class="section-title">HO</div>
+    <div id="ho-list" style="display:flex;flex-direction:column;gap:10px;"></div>
+    <button class="btn-add" onclick="addHO()">＋ HO追加</button>
+  </div>
+
+  <hr class="divider">
+
+  <!-- エンディング -->
+  <div>
+    <div class="section-title">エンディング</div>
+    <div class="row">
+      <div class="field" style="flex:0 0 60px;">
+        <label>番号</label>
+        <input type="text" id="end-label" placeholder="A" oninput="render()" style="width:60px;">
+      </div>
+      <div class="field">
+        <label>説明</label>
+        <input type="text" id="end-desc" placeholder="両生還" oninput="render()">
+      </div>
+    </div>
+  </div>
+
+  <hr class="divider">
+
+  <!-- フッター絵文字 -->
+  <div class="field">
+    <label>フッター絵文字</label>
+    <input type="text" id="footer-emoji" placeholder="🌕🍷" oninput="render()">
+  </div>
+</div>
+
+<div class="panel-right">
+  <div class="preview-label">Preview</div>
+  <div class="preview-box" id="preview"></div>
+  <button class="btn-copy" id="copy-btn" onclick="copyText()">Copy</button>
+</div>
+
+<script>
+  const STAR = '︎✦︎︎︎';
+  let headerEmoji = '𖤐';
+  let hoList = [];
+  let hoCounter = 0;
+  let currentTemplate = 0;
+  let kpType = 'KP';
+  let plType = 'PL';
+
+  function setTemplate(n, btn) {
+    currentTemplate = n;
+    document.querySelectorAll('.tab').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    // うみ専用フィールドの表示切替
+    const showEmoji = n === 0;
+    document.getElementById('field-emoji').style.display = showEmoji ? '' : 'none';
+    document.getElementById('divider-emoji').style.display = showEmoji ? '' : 'none';
+    render();
+  }
+
+  function selectEmoji(btn, emoji) {
+    document.querySelectorAll('.emoji-btn').forEach(b => b.classList.remove('selected'));
+    btn.classList.add('selected');
+    headerEmoji = emoji;
+    render();
+  }
+
+  function setKPType(type, btn) {
+    kpType = type;
+    document.querySelectorAll('.toggle-row')[0].querySelectorAll('.toggle-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    document.getElementById('kp-label').textContent = type + '名';
+    render();
+  }
+
+  function setPLType(type, btn) {
+    plType = type;
+    document.querySelectorAll('.toggle-row')[1].querySelectorAll('.toggle-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    render();
+  }
+
+  function addHO() {
+    hoCounter++;
+    const id = hoCounter;
+    const defaultNum = String(hoList.length + 1);
+    hoList.push({ id, num: defaultNum, role: '', pl: '', chara: '' });
+    renderHOInputs();
+    render();
+  }
+
+  function removeHO(id) {
+    hoList = hoList.filter(h => h.id !== id);
+    renderHOInputs();
+    render();
+  }
+
+  function renderHOInputs() {
+    const container = document.getElementById('ho-list');
+    container.innerHTML = '';
+    hoList.forEach((ho, idx) => {
+      const div = document.createElement('div');
+      div.className = 'ho-block';
+      div.innerHTML = `
+        <div class="ho-header">
+          <span class="ho-label">HO ${idx + 1}</span>
+          <button class="btn-remove" onclick="removeHO(${ho.id})">remove</button>
+        </div>
+        <div class="row">
+          <div class="field" style="flex:0 0 70px;">
+            <label>番号/名</label>
+            <input type="text" placeholder="${idx+1}" value="${ho.num}" oninput="updateHO(${ho.id},'num',this.value)" style="width:70px;">
+          </div>
+          <div class="field">
+            <label>種族・役割</label>
+            <input type="text" placeholder="吸血鬼" value="${ho.role}" oninput="updateHO(${ho.id},'role',this.value)">
+          </div>
+        </div>
+        <div class="row">
+          <div class="field">
+            <label>PL/PC名</label>
+            <input type="text" placeholder="ろれつさん" value="${ho.pl}" oninput="updateHO(${ho.id},'pl',this.value)">
+          </div>
+          <div class="field">
+            <label>キャラ名</label>
+            <input type="text" placeholder="Răzvan=Carnescean" value="${ho.chara}" oninput="updateHO(${ho.id},'chara',this.value)">
+          </div>
+        </div>
+      `;
+      container.appendChild(div);
+    });
+  }
+
+  function updateHO(id, key, val) {
+    const ho = hoList.find(h => h.id === id);
+    if (ho) { ho[key] = val; render(); }
+  }
+
+  // ── テンプレートレンダラー ──
+
+  function renderUmi() {
+    const scenario = document.getElementById('scenario').value || 'シナリオ名';
+    const kp = document.getElementById('kp').value || '🫧';
+    const endLabel = document.getElementById('end-label').value || 'A';
+    const endDesc = document.getElementById('end-desc').value || '';
+    const footerEmoji = document.getElementById('footer-emoji').value || '';
+    const endLine = endDesc ? `${endLabel}｜${endDesc}` : endLabel;
+
+    let hoText = '';
+    hoList.forEach((ho) => {
+      const num = ho.num || '';
+      const role = ho.role || '';
+      const pl = ho.pl || '';
+      const chara = ho.chara || '';
+      hoText += `　ʜᴏ${toSup(num)}   ${role} ︴${pl}\n`;
+      if (chara) hoText += `　　　　${chara}\n`;
+    });
+    hoText = hoText.replace(/\n$/, '');
+
+    return [
+      STAR,
+      '',
+      headerEmoji,
+      '',
+      `▮ ᴄᴀʟʟ ᴏꜰ ᴄᴛʜᴜʟʜᴜ`,
+      `　${scenario}`,
+      '',
+      `｜ ${kpType}  ︴${kp}`,
+      '',
+      `｜ ᴘᴄ・${plType === 'PL' ? 'ᴘʟ' : 'ᴘᴄ'}`,
+      hoText,
+      '',
+      `｜ ᴇɴᴅ ${endLine}`,
+      '',
+      footerEmoji,
+      '',
+      STAR,
+    ].join('\n');
+  }
+
+  function renderStar() {
+    const scenario = document.getElementById('scenario').value || 'シナリオ名';
+    const kp = document.getElementById('kp').value || '';
+    const endLabel = document.getElementById('end-label').value || '';
+    const endDesc = document.getElementById('end-desc').value || '';
+    const footerEmoji = document.getElementById('footer-emoji').value || '';
+    const endLine = endDesc ? `${endLabel} - ${endDesc}` : endLabel;
+
+    let hoText = '';
+    hoList.forEach((ho) => {
+      const num = ho.num || '';
+      const role = ho.role || '';
+      const pl = ho.pl || '';
+      const chara = ho.chara || '';
+      const nameStr = chara ? `${chara}　/ ${pl}` : pl;
+      hoText += `　　　　HO${num}${role ? '：' + role : ''}：${nameStr}\n`;
+    });
+    hoText = hoText.replace(/\n$/, '');
+
+    return [
+      '✦',
+      '',
+      `　　　　　　　『${scenario}』`,
+      '',
+      `　　　　　　　${kpType}：${kp}`,
+      '',
+      hoText,
+      '',
+      `　　　　　　▎END - ${endLine}`,
+      footerEmoji ? `\n${footerEmoji}` : '',
+      '',
+      '✦',
+    ].join('\n').replace(/\n{3,}/g, '\n\n');
+  }
+
+  function renderLine() {
+    const scenario = document.getElementById('scenario').value || 'シナリオ名';
+    const kp = document.getElementById('kp').value || '';
+    const endLabel = document.getElementById('end-label').value || '';
+    const endDesc = document.getElementById('end-desc').value || '';
+    const footerEmoji = document.getElementById('footer-emoji').value || '';
+    const endLine = endDesc ? `${endLabel}｜${endDesc}` : endLabel;
+    const div = '───────────────';
+
+    let hoText = '';
+    hoList.forEach((ho) => {
+      const num = ho.num || '';
+      const role = ho.role || '';
+      const pl = ho.pl || '';
+      const chara = ho.chara || '';
+      const nameStr = chara ? `${chara} / ${pl}` : pl;
+      hoText += `${role ? role : 'HO' + num}　${nameStr}\n`;
+    });
+    hoText = hoText.replace(/\n$/, '');
+
+    return [
+      div,
+      '',
+      `𝐂𝐨𝐂`,
+      `『${scenario}』`,
+      '',
+      `❙ ${kpType}`,
+      kp,
+      '',
+      `❙ ${plType}`,
+      hoText,
+      footerEmoji ? `(敬称略)\n\n${footerEmoji}` : '(敬称略)',
+      '',
+      div,
+    ].join('\n');
+  }
+
+  function render() {
+    let text = '';
+    if (currentTemplate === 0) text = renderUmi();
+    else if (currentTemplate === 1) text = renderStar();
+    else text = renderLine();
+    document.getElementById('preview').textContent = text;
+  }
+
+  function toSup(s) {
+    const map = {'0':'⁰','1':'¹','2':'²','3':'³','4':'⁴','5':'⁵','6':'⁶','7':'⁷','8':'⁸','9':'⁹'};
+    return String(s).split('').map(c => map[c] || c).join('');
+  }
+
+  function copyText() {
+    const text = document.getElementById('preview').textContent;
+    navigator.clipboard.writeText(text).then(() => {
+      const btn = document.getElementById('copy-btn');
+      btn.textContent = 'Copied';
+      btn.classList.add('copied');
+      setTimeout(() => { btn.textContent = 'Copy'; btn.classList.remove('copied'); }, 2000);
+    });
+  }
+
+  // 初期
+  addHO(); addHO();
+  render();
+</script>
+</body>
+</html>
