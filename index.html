@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="ja">
 <head>
 <meta charset="UTF-8">
@@ -673,4 +673,123 @@
     hoList.forEach((ho) => {
       const num = ho.num || '';
       const role = ho.role || '';
-  
+      const pl = ho.pl || '';
+      const chara = ho.chara || '';
+      hoText += `｜ ʜᴏ${toSup(num)}　${role}　${pl}\n`;
+      if (chara) hoText += `｜　${chara}\n`;
+    });
+    hoText = hoText.replace(/\n$/, '');
+
+    return [
+      STAR, '',
+      headerEmoji, '',
+      `▮ ᴄᴀʟʟ ᴏꜰ ᴄᴛʜᴜʟʜᴜ　${scenario}`, '',
+      `｜ ${kpType}　${kp}`, '',
+      `｜ ᴘᴄ・${plType === 'PL' ? 'ᴘʟ' : 'ᴘᴄ'}`,
+      hoText, '',
+      `｜ ᴇɴᴅ　${endLine}`, '',
+      footerEmoji, '',
+      STAR,
+    ].join('\n');
+  }
+
+  function renderStarFlat() {
+    const scenario = document.getElementById('scenario').value || 'シナリオ名';
+    const kp = document.getElementById('kp').value || '';
+    const endLabel = document.getElementById('end-label').value || '';
+    const endDesc = document.getElementById('end-desc').value || '';
+    const footerEmoji = document.getElementById('footer-emoji').value || '';
+    const endLine = endDesc ? `${endLabel} - ${endDesc}` : endLabel;
+
+    let hoText = '';
+    hoList.forEach((ho) => {
+      const num = ho.num || '';
+      const role = ho.role || '';
+      const pl = ho.pl || '';
+      const chara = ho.chara || '';
+      hoText += `HO${num}${role ? '　' + role : ''}\n`;
+      if (chara) hoText += `　${chara} / ${pl}\n`;
+      else hoText += `　${pl}\n`;
+    });
+    hoText = hoText.replace(/\n$/, '');
+
+    return [
+      '✦', '',
+      `『${scenario}』`,
+      `${kpType}　${kp}`, '',
+      hoText, '',
+      `▎END　${endLine}`,
+      footerEmoji ? `\n${footerEmoji}` : '', '',
+      '✦',
+    ].join('\n').replace(/\n{3,}/g, '\n\n');
+  }
+
+  function renderLineFlat() {
+    const scenario = document.getElementById('scenario').value || 'シナリオ名';
+    const kp = document.getElementById('kp').value || '';
+    const endLabel = document.getElementById('end-label').value || '';
+    const endDesc = document.getElementById('end-desc').value || '';
+    const footerEmoji = document.getElementById('footer-emoji').value || '';
+    const endLine = endDesc ? `${endLabel}｜${endDesc}` : endLabel;
+    const div = '───────────────';
+
+    let hoText = '';
+    hoList.forEach((ho) => {
+      const num = ho.num || '';
+      const role = ho.role || '';
+      const pl = ho.pl || '';
+      const chara = ho.chara || '';
+      hoText += `${role ? role : 'HO' + num}\n`;
+      if (chara) hoText += `　${chara} / ${pl}\n`;
+      else hoText += `　${pl}\n`;
+    });
+    hoText = hoText.replace(/\n$/, '');
+
+    const keishoLine = showKeisho ? '(敬称略)' : '';
+    return [
+      div, '',
+      `𝐂𝐨𝐂　『${scenario}』`, '',
+      `❙ ${kpType}　${kp}`, '',
+      `❙ ${plType}`,
+      hoText,
+      keishoLine,
+      footerEmoji,
+      div,
+    ].filter(l => l !== '').join('\n');
+  }
+
+  function render() {
+    let text = '';
+    if (currentTemplate === 0) text = renderUmi();
+    else if (currentTemplate === 1) text = renderStar();
+    else text = renderLine();
+    document.getElementById('preview').textContent = text;
+  }
+
+  function toSup(s) {
+    const map = {'0':'⁰','1':'¹','2':'²','3':'³','4':'⁴','5':'⁵','6':'⁶','7':'⁷','8':'⁸','9':'⁹'};
+    return String(s).split('').map(c => map[c] || c).join('');
+  }
+
+  function getFlatText() {
+    if (currentTemplate === 0) return renderUmiFlat();
+    if (currentTemplate === 1) return renderStarFlat();
+    return renderLineFlat();
+  }
+
+  function copyText(flat = false) {
+    const text = flat ? getFlatText() : document.getElementById('preview').textContent;
+    navigator.clipboard.writeText(text).then(() => {
+      const btn = document.getElementById(flat ? 'copy-flat-btn' : 'copy-btn');
+      const orig = btn.textContent;
+      btn.textContent = 'Copied ✦';
+      btn.classList.add('copied');
+      setTimeout(() => { btn.textContent = orig; btn.classList.remove('copied'); }, 2000);
+    });
+  }
+
+  addHO(); addHO();
+  render();
+</script>
+</body>
+</html>
